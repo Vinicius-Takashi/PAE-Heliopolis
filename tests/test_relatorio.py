@@ -13,10 +13,10 @@ from urllib.error import URLError
 
 import pandas as pd
 
-from analise import (comparar_inmet, episodios_quentes, gerar_relatorio,
+from analise import (episodios_quentes, gerar_relatorio,
                      indicadores_diarios, indicadores_noturnos, resumo_anual)
 from dados import (ErroDados, VARIAVEIS, buscar_open_meteo, carregar_json,
-                   exportar_json, grade_horaria, interpretar_api, ler_inmet,
+                   exportar_json, grade_horaria, interpretar_api,
                    limpar_horarios, montar_conjunto)
 
 
@@ -106,13 +106,6 @@ class TestAnalise(unittest.TestCase):
         self.assertTrue(pd.isna(anual.iloc[0].dias_quentes_pct))
         self.assertTrue(pd.isna(anual.iloc[0].dias_quentes))
 
-    def test_comparacao_so_usa_pares_coincidentes(self):
-        horarios = exemplo()
-        estacao = pd.DataFrame({"temperatura_inmet_c": [30.0, 34.0, float("nan")]}, index=horarios.index[:3])
-        pares, medidas = comparar_inmet(horarios, estacao)
-        self.assertEqual(len(pares), 2)
-        self.assertEqual(medidas, {"pares": 2, "vies_c": 0, "mae_c": 2, "rmse_c": 2})
-
     def test_relatorio_guarda_criterios_e_limitacoes(self):
         conjunto = conjunto_exemplo()
         diario = indicadores_diarios(conjunto["horarios"])
@@ -172,24 +165,6 @@ class TestDados(unittest.TestCase):
             buscar_open_meteo(date(2024, 2, 1), date(2024, 1, 1))
         conexao.assert_not_called()
 
-    def test_inmet_decimal_virgula_metadados_e_sentinela(self):
-        texto = """REGIAO:;SE
-ESTACAO:;ESTAÇÃO DE TESTE
-CODIGO (WMO):;A000
-DATA (YYYY-MM-DD);HORA (UTC);TEMPERATURA DO AR - BULBO SECO, HORARIA (°C);
-2024-01-01;0300 UTC;29,5;
-2024-01-01;0400 UTC;-9999;
-2024-01-01;0500 UTC;30,5;
-"""
-        tabela, meta = ler_inmet(texto.encode("latin-1"))
-        self.assertEqual(tabela.iloc[0].temperatura_inmet_c, 29.5)
-        self.assertTrue(pd.isna(tabela.iloc[1].temperatura_inmet_c))
-        self.assertEqual(tabela.index[0], pd.Timestamp("2024-01-01T03:00:00Z"))
-        self.assertEqual(meta["CODIGO (WMO)"], "A000")
-
-    def test_csv_desconhecido_rejeitado(self):
-        with self.assertRaises(ErroDados):
-            ler_inmet(b"a,b\n1,2")
 
 
 if __name__ == "__main__":

@@ -29,20 +29,20 @@ def gerar():
         'HTTPS GET /v1/archive • modelo ERA5',
         'Coordenadas, datas e variáveis na URL',
         'Resposta JSON • timeout de 60 segundos'])
-    caixa((960,30,1740,205),'Arquivos locais',[
+    caixa((960,30,1740,205),'Arquivo local do Open-Meteo',[
         'JSON ERA5 salvo tem prioridade',
-        'CSVs INMET baixados pelo usuário',
-        'Nenhum download automático do INMET'])
+        'Valores de origem e metadados da coleta',
+        'A mesma fonte, disponível sem internet'])
     d.rounded_rectangle((30,335,1770,1040),radius=18,outline='#486475',width=4)
     d.text((1120,360),'APLICAÇÃO PYTHON • UM PROCESSO COM MÓDULOS',font=negrito,fill='#172D3B',anchor='mt')
     caixa((80,450,570,640),'E • Extrair',[
-        'dados.py e inmet_local.py',
-        'Ler JSON e CSVs',
+        'dados.py',
+        'Ler a resposta JSON',
         'GET se não houver JSON'])
     caixa((655,450,1145,640),'T • Transformar',[
         'Pandas • validar e limpar',
         'UTC, grade e cobertura',
-        'Lacunas e fontes separadas'])
+        'Preservar lacunas'])
     caixa((1230,450,1720,640),'L • Carregar',[
         'DataFrames em memória',
         'Sessão e cache Streamlit',
@@ -52,10 +52,10 @@ def gerar():
     seta([(1320,205),(1320,300),(550,300),(550,450)],'Leitura do disco',(1010,273))
     seta([(570,545),(655,545)])
     seta([(1145,545),(1230,545)])
-    caixa((80,755,845,965),'Análises e comparação regional',[
-        'analise.py e contexto_regional.py',
+    caixa((80,755,845,965),'Análise exploratória do calor',[
+        'analise.py',
         'Dias, noites e sequências de calor',
-        'Comparação nas datas válidas comuns'])
+        'Temperatura, umidade e perfil horário'])
     caixa((955,755,1720,965),'Apresentação e controle',[
         'app.py e painel.py • Streamlit',
         'Filtros, gráficos, cartões e tabelas',
@@ -69,7 +69,7 @@ def gerar():
     seta([(1510,1160),(1510,965)],'Interações',(1595,1080))
     d.text((70,1110),'Persistência auxiliar pelo terminal',font=negrito,fill='#172D3B')
     d.text((70,1160),'gerar_relatorio.py → JSON, CSVs e TXT',font=normal,fill='#172D3B')
-    d.text((70,1205),'inmet_local.py → séries tratadas e auditoria',font=normal,fill='#172D3B')
+    d.text((70,1205),'Origem, indicadores e qualidade da série ERA5',font=normal,fill='#172D3B')
     d.text((70,1270),'O dashboard não grava automaticamente essas saídas.',font=pequeno,fill='#172D3B')
     out=Path(__file__).resolve().parents[1]/'assets'/'arquitetura_projeto.png'
     out.parent.mkdir(exist_ok=True)

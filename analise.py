@@ -5,7 +5,6 @@ UTCI, temperatura de superfície nem temperatura dentro das casas.
 """
 
 from datetime import timedelta
-import math
 
 import pandas as pd
 
@@ -120,18 +119,6 @@ def resumo_anual(diario: pd.DataFrame):
         for ano, quantidade in resumo.dias_no_recorte.items()]
     resumo.index.name = "ano"
     return resumo
-
-
-def comparar_inmet(horarios: pd.DataFrame, estacao: pd.DataFrame):
-    """Compara apenas temperaturas presentes no MESMO instante UTC."""
-    pares = horarios[["temperatura_c"]].join(estacao, how="inner").dropna()
-    if pares.empty:
-        return pares, {}
-    diferenca = pares.temperatura_c - pares.temperatura_inmet_c
-    medidas = {"pares": len(pares), "vies_c": float(diferenca.mean()),
-               "mae_c": float(diferenca.abs().mean()),
-               "rmse_c": math.sqrt(float(diferenca.pow(2).mean()))}
-    return pares, medidas
 
 
 def gerar_relatorio(conjunto, diario, noites, episodios, limiar, minimo_dias, cobertura):

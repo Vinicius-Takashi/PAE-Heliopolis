@@ -13,7 +13,6 @@ from analise import episodios_quentes, indicadores_diarios, indicadores_noturnos
 from apoio import numero
 from arquitetura_projeto import (INTRODUCAO, REQUISICOES, ETL, FUNCIONAIS,
     NAO_FUNCIONAIS, FUTURO, LIMITE, IMAGEM_ARQUITETURA)
-from contexto_regional import comparar_exposicao
 from dados import (ErroDados, FIM_ESTUDO, FUSO, INICIO_ESTUDO,
                    buscar_open_meteo, carregar_json, recortar_periodo)
 
@@ -191,14 +190,10 @@ def main():
     mostrar_rotina(horarios, diario, noites)
     with st.expander("Explorar sequências de calor persistente"):
         mostrar_persistencia(episodios, limiar)
-    with st.container(border=True):
-        st.markdown("**O calor também aparece nas referências do entorno?**")
-        comparar_exposicao(horarios, limiar)
     st.caption("Leitura dos resultados: dias e noites exigem pelo menos 90% das horas de temperatura; "
                "noites parciais são excluídas. Máximas vêm de amostras horárias. Lacunas permanecem ausentes. "
-               "ERA5 representa uma grade regional (~25 km); INMET representa o local de cada estação.")
-    st.caption("Fontes: [Open-Meteo / Copernicus ERA5](https://open-meteo.com/en/docs/historical-weather-api) · "
-               "[INMET](https://portal.inmet.gov.br/dadoshistoricos).")
+               "ERA5 representa uma grade regional (~25 km), não medições dentro de Heliópolis.")
+    st.caption("Fonte meteorológica: [Open-Meteo / Copernicus ERA5](https://open-meteo.com/en/docs/historical-weather-api).")
 
 
 if __name__ == "__main__":

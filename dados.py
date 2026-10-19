@@ -5,9 +5,7 @@ inserido se a API falhar: o erro é apresentado para quem estiver usando o paine
 """
 
 from datetime import date, datetime, timedelta, timezone
-from io import StringIO
 import json
-import unicodedata
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -219,59 +217,3 @@ def carregar_json(conteudo: bytes):
         return montar_conjunto(arquivo["resposta_api"], meta)
     except (KeyError, TypeError, UnicodeError, ValueError) as erro:
         raise ErroDados(f"Arquivo JSON inválido: {erro}") from erro
-
-
-def normalizar(texto: str) -> str:
-    """Remove acentos só para reconhecer nomes de colunas de diferentes anos."""
-    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().upper().strip()
-
-
-def ler_inmet(conteudo: bytes):
-    """Lê um CSV de estação automática do pacote anual oficial do INMET.
-
-    O cabeçalho de metadados vem antes da tabela; por isso não fixamos o número
-    de linhas a pular. A temperatura instantânea é usada na comparação horária.
-    A radiação do INMET não é convertida aqui: unidades e intervalos são distintos.
-    """
-    try:
-        texto = conteudo.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        texto = conteudo.decode("latin-1")
-    linhas = texto.splitlines()
-    cabecalho = next((i for i, linha in enumerate(linhas)
-                     if normalizar(linha).startswith("DATA") and "HORA" in normalizar(linha)), None)
-    if cabecalho is None:
-        raise ErroDados("Cabeçalho não encontrado. Envie o CSV de uma estação automática do INMET.")
-    metadados = {}
-    for linha in linhas[:cabecalho]:
-        partes = linha.split(";", 1)
-        if len(partes) == 2:
-            metadados[partes[0].strip(": ")] = partes[1].strip()
-    try:
-        original = pd.read_csv(StringIO("\n".join(linhas[cabecalho:])),
-                               sep=";", decimal=",", dtype=str)
-        nomes = {normalizar(str(coluna)): coluna for coluna in original.columns}
-        data_col = next(v for k, v in nomes.items() if k.startswith("DATA"))
-        hora_col = next(v for k, v in nomes.items() if "HORA" in k and "UTC" in k)
-        temp_col = next(v for k, v in nomes.items()
-                        if "TEMPERATURA DO AR" in k and "BULBO SECO" in k)
-        # 0000 UTC, 00:00 e 0000 são exemplos comuns nos arquivos anuais.
-        hora = original[hora_col].str.extract(r"^(\d{2})", expand=False)
-        datas = pd.to_datetime(original[data_col], format="mixed", errors="coerce")
-        instantes = (datas + pd.to_timedelta(pd.to_numeric(hora, errors="coerce"), unit="h")).dt.tz_localize("UTC")
-        valores = pd.to_numeric(original[temp_col].str.replace(",", ".", regex=False), errors="coerce")
-        tabela = pd.DataFrame({"temperatura_inmet_c": valores.to_numpy()}, index=instantes)
-    except (StopIteration, ValueError, TypeError, pd.errors.ParserError) as erro:
-        raise ErroDados("Não reconheci as colunas DATA, HORA UTC e TEMPERATURA DO AR - BULBO SECO.") from erro
-    datas_invalidas = int(tabela.index.isna().sum())
-    tabela = tabela.loc[tabela.index.notna()]
-    duplicatas = int(tabela.index.duplicated().sum())
-    tabela = tabela.loc[~tabela.index.duplicated(keep="first")].sort_index()
-    # -9999 e extremos inconsistentes viram lacunas, jamais zero.
-    tabela["temperatura_inmet_c"] = tabela.temperatura_inmet_c.where(
-        tabela.temperatura_inmet_c.between(-90, 65))
-    if not tabela.temperatura_inmet_c.notna().any():
-        raise ErroDados("O CSV não contém temperaturas válidas.")
-    metadados["linhas_com_data_invalida"] = datas_invalidas
-    metadados["horarios_duplicados_removidos"] = duplicatas
-    return tabela, metadados
