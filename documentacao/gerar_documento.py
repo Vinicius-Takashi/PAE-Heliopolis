@@ -3,6 +3,7 @@
 Usa o ambiente de documentos da ferramenta, separado das dependências da aplicação.
 """
 from pathlib import Path
+import sys
 from math import atan2, cos, sin
 from PIL import Image, ImageDraw, ImageFont
 from docx import Document
@@ -13,6 +14,11 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT.parent))
+from arquitetura_projeto import (INTRODUCAO, REQUISICOES, ETL, FUNCIONAIS,
+                                NAO_FUNCIONAIS, FUTURO, LIMITE)
+from gerar_arquitetura import gerar
+arquitetura_imagem = gerar()
 OUT = ROOT / 'Arquitetura_do_dashboard_Heliopolis.docx'
 QA = ROOT / 'verificacao'
 QA.mkdir(exist_ok=True)
@@ -131,6 +137,30 @@ def formula(text):
 doc.add_paragraph('Arquitetura e metodologia do dashboard de Heliópolis','Title')
 p('Guia de estudo do fluxo de dados e dos cálculos implementados')
 p('Este documento explica a implementação atual do dashboard: como os dados são obtidos, tratados e utilizados; quais cálculos produzem cada gráfico; e como os arquivos Python se comunicam. O período analisado é 2021–2025, definido como os cinco anos completos anteriores a 2026.')
+h('Engenharia de software e arquitetura')
+p(INTRODUCAO)
+h('Requisitos funcionais implementados')
+table(['Código','Requisito','Comportamento'], FUNCIONAIS, [1.6,3.7,11.7])
+page('Requisitos não funcionais e limites operacionais')
+p('Os requisitos funcionais descrevem ações observáveis, como filtrar anos e calcular episódios. Os requisitos não funcionais definem condições de qualidade e operação dessas ações. A tabela registra os critérios adotados no código, com os limites que ainda não foram avaliados ou implementados.')
+table(['Código','Atributo','Critério atual'], NAO_FUNCIONAIS, [1.6,3.7,11.7])
+h('Escopo ainda não implementado')
+p(FUTURO)
+p(LIMITE)
+h('Como verificar os requisitos')
+p('Os testes automatizados verificam filtros, cobertura, lacunas, fronteiras de datas e comparação em datas comuns. A inspeção dos metadados permite rastrear a origem dos dados. Sessão e cache reduzem trabalho repetido, mas não constituem teste de carga ou garantia de tempo de resposta. Falhas previstas recebem tratamento; indisponibilidade externa, falhas inesperadas e alterações no formato das fontes ainda podem interromper a análise.')
+
+page('Arquitetura das requisições e do processamento')
+p('A aplicação consome uma API REST externa e processa arquivos locais. As setas representam as trocas de dados e a sequência das responsabilidades; não representam microsserviços independentes.')
+doc.add_picture(str(arquitetura_imagem),width=Cm(17))
+doc.paragraphs[-1].alignment=WD_ALIGN_PARAGRAPH.CENTER
+doc.inline_shapes[-1]._inline.docPr.set('descr','API externa recebe GET e retorna JSON ao módulo de extração. Arquivos locais também alimentam a extração. Transformação com Pandas e carga em memória alimentam análises e Streamlit, que troca interface e filtros com o navegador.')
+doc.add_paragraph('Figura de arquitetura  Requisições externas e ETL em memória na aplicação Python','Caption')
+p(REQUISICOES)
+p(ETL)
+p(LIMITE)
+
+page('Contexto do estudo e explicação do ERA5')
 h('Objetivo e alcance atual')
 p('O objetivo do projeto é utilizar Ciência de Dados para analisar os impactos do estresse térmico na saúde e na qualidade de vida dos moradores de Heliópolis, integrando as medições do Observatório De Olho na Quebrada a fontes públicas externas.')
 p('Como a base do Observatório não está disponível e não há desfechos de saúde ou qualidade de vida integrados, a versão documentada descreve condições regionais de calor. Ela não mede temperaturas dentro das moradias, sintomas, qualidade do sono ou impactos individuais.')
@@ -239,6 +269,7 @@ p('Organiza a coleção de CSVs. manifesto identifica mudanças nos arquivos; ca
 page('8 Comunicação execução e persistência')
 h('contexto_regional.py e apoio.py')
 p('contexto_regional.py conecta as estações à análise. referencias chama tratar com cache; comparar_exposicao alinha o período, calcula indicadores com analise.py, seleciona dias comuns e apresenta a tabela. Esse arquivo reúne lógica analítica e apresentação da comparação. apoio.py contém apenas numero, responsável por casas decimais, separadores em português e ausência exibida como travessão.')
+p('arquitetura_projeto.py centraliza o texto dos requisitos, a descrição arquitetural e o caminho da imagem usados no dashboard e neste documento. assets/arquitetura_projeto.png é a imagem compartilhada. Os geradores em documentacao/ preparam os artefatos e não são executados pelo dashboard; suas dependências de edição de documentos não fazem parte da aplicação Streamlit.')
 h('gerar_relatorio.py')
 p('É uma entrada alternativa pelo terminal. Usa dados.py e analise.py para gerar um JSON de origem, CSVs horário, diário, noturno, episódios, resumo anual e qualidade, além de parametros.json e relatorio_inicial.txt. O argumento --arquivo permite repetir a análise offline; --inicio e --fim delimitam o período; --saida define o destino.')
 p('Seus critérios são fixos em 30 °C, três dias e 90% de cobertura. O script não recebe automaticamente o limiar selecionado na sessão do dashboard e não gera a comparação regional atual. A execução pode substituir os arquivos de saída com os mesmos nomes.')

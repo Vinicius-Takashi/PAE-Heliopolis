@@ -11,6 +11,8 @@ import streamlit as st
 
 from analise import episodios_quentes, indicadores_diarios, indicadores_noturnos, resumo_anual
 from apoio import numero
+from arquitetura_projeto import (INTRODUCAO, REQUISICOES, ETL, FUNCIONAIS,
+    NAO_FUNCIONAIS, FUTURO, LIMITE, IMAGEM_ARQUITETURA)
 from contexto_regional import comparar_exposicao
 from dados import (ErroDados, FIM_ESTUDO, FUSO, INICIO_ESTUDO,
                    buscar_open_meteo, carregar_json, recortar_periodo)
@@ -134,11 +136,32 @@ def mostrar_persistencia(episodios, limiar):
                "Critério exploratório, não uma definição oficial de onda de calor.")
 
 
+def mostrar_arquitetura():
+    """Apresenta os requisitos e o fluxo técnico antes das análises do estudo."""
+    st.subheader("Engenharia de software e arquitetura")
+    st.write(INTRODUCAO)
+    st.image(str(IMAGEM_ARQUITETURA), caption="Arquitetura implementada: API REST externa, ETL em memória e apresentação no Streamlit.")
+    st.write(REQUISICOES)
+    st.write(ETL)
+    funcionais, qualidade = st.columns(2)
+    with funcionais:
+        st.markdown("**Requisitos funcionais — o que o sistema faz**")
+        for codigo, titulo, descricao in FUNCIONAIS:
+            st.markdown(f"**{codigo} · {titulo}:** {descricao}")
+    with qualidade:
+        st.markdown("**Requisitos não funcionais — como o sistema deve operar**")
+        for codigo, titulo, descricao in NAO_FUNCIONAIS:
+            st.markdown(f"**{codigo} · {titulo}:** {descricao}")
+    st.caption(FUTURO)
+    st.caption(LIMITE)
+
+
 def main():
     st.set_page_config(page_title="Heliópolis | Estresse térmico", page_icon="☀️", layout="wide")
     st.title("Heliópolis · Estresse térmico")
     st.write("Análise exploratória da exposição ao calor para o estudo da saúde e da qualidade de vida dos moradores.")
     st.caption("2021–2025 · Contexto ambiental regional de Heliópolis")
+    mostrar_arquitetura()
     st.info("Análise preliminar: as medições do Observatório De Olho na Quebrada não estão disponíveis para o projeto. "
             "Sem essa base e sem desfechos de saúde ou qualidade de vida integrados, os resultados descrevem "
             "o calor regional; não medem impactos nos moradores nem temperaturas dentro das moradias.")
