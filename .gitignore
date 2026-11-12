@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 .streamlit/secrets.toml
 dados_locais/
+requisitos.md
+
+# Gerados pelo montar_pacote.ps1
+dist/
+python-embed.zip
